@@ -1,0 +1,28 @@
+{
+  "PolicyType": "EBS_SNAPSHOT_MANAGEMENT",
+  "ResourceTypes": ["VOLUME"],
+  "TargetTags": [
+    {
+      "Key": "BackupStrategy",
+      "Value": "monthly"
+    }
+  ],
+  "Schedules": [
+    {
+      "Name": "monthly snapshot",
+      "CopyTags": true,
+      "TagsToAdd": [
+        {
+          "Key": "SnapshotCreator",
+          "Value": "EKS Monthly Backup"
+        }
+      ],
+      "CreateRule": {
+        "CronExpression": "cron(0 21 L * ? *)"
+      },
+      "RetainRule": {
+        "Count": 1
+      }
+    }
+  ]
+}

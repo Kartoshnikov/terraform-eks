@@ -1,0 +1,8 @@
+image:
+  repository: ${repo_url}/amazon/aws-load-balancer-controller
+clusterName: ${cluster_name}
+serviceAccount:
+    name: aws-load-balancer-controller
+    create: true
+    annotations:
+        eks.amazonaws.com/role-arn: ${role_arn}

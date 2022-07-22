@@ -1,0 +1,31 @@
+image:
+  repository: ${repo_url}/eks/aws-ebs-csi-driver
+enableVolumeResizing: true
+enableVolumeSnapshot: true
+controller:
+  serviceAccount:
+    name: ebs-csi-controller-sa
+    create: true
+    annotations:
+      eks.amazonaws.com/role-arn: ${role_arn}
+  extraVolumeTags:
+    %{~ for k, v in extra_tags ~}
+    ${k}: ${v}
+    %{~ endfor ~}
+storageClasses:
+- name: ebs-sc-delete
+  volumeBindingMode: WaitForFirstConsumer
+  allowVolumeExpansion: true
+  reclaimPolicy: Delete
+  parameters:
+    type: gp2 
+    fsType: ext4
+- name: ebs-sc-retain
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "true"
+  volumeBindingMode: WaitForFirstConsumer
+  allowVolumeExpansion: true
+  reclaimPolicy: Retain
+  parameters:
+    type: gp2 
+    fsType: ext4

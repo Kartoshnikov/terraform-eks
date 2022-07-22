@@ -1,0 +1,61 @@
+controller:
+  ingressClass: default
+  annotations:
+    ingressclass.kubernetes.io/is-default-class: "true"
+  service:
+    externalTrafficPolicy: "Local"
+    annotations:
+      service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
+      service.beta.kubernetes.io/aws-load-balancer-type: external
+      service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: instance
+      service.beta.kubernetes.io/aws-load-balancer-connection-idle-timeout: '60'
+      service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
+      service.beta.kubernetes.io/aws-load-balancer-additional-resource-tags: ${extra_tags}
+  config:
+    server-tokens: "false"
+    ssl-protocols: "TLSv1.2 TLSv1.3"
+    ssl-ciphers: "ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA256"
+    ssl-session-cache: "true"
+    ssl-session-cache-size: "10m"
+    use-proxy-protocol: "false"
+    use-forwarded-headers: "false"
+    enable-real-ip: "false"
+    limit-conn-zone-variable: "5m"
+    http-snippet: |
+      more_set_headers 	'Server: ';
+      more_set_headers	'X-Powered-By: ';
+      map $http_user_agent $limit_bots {
+        default 0;
+        ~*(google|bing|yandex|msnbot) 1;
+        ~*(AltaVista|Googlebot|Slurp|BlackWidow|Bot|ChinaClaw|Custo|DISCo|Download|Demon|eCatch|EirGrabber|EmailSiphon|EmailWolf|SuperHTTP|Surfbot|WebWhacker) 1;
+        ~*(Express|WebPictures|ExtractorPro|EyeNetIE|FlashGet|GetRight|GetWeb!|Go!Zilla|Go-Ahead-Got-It|GrabNet|Grafula|HMView|Go!Zilla|Go-Ahead-Got-It) 1;
+        ~*(rafula|HMView|HTTrack|Stripper|Sucker|Indy|InterGET|Ninja|JetCar|Spider|larbin|LeechFTP|Downloader|tool|Navroad|NearSite|NetAnts|tAkeOut|WWWOFFLE) 1;
+        ~*(GrabNet|NetSpider|Vampire|NetZIP|Octopus|Offline|PageGrabber|Foto|pavuk|pcBrowser|RealDownload|ReGet|SiteSnagger|SmartDownload|SuperBot|WebSpider) 1;
+        ~*(Teleport|VoidEYE|Collector|WebAuto|WebCopier|WebFetch|WebGo|WebLeacher|WebReaper|WebSauger|eXtractor|Quester|WebStripper|WebZIP|Wget|Widow|Zeus) 1;
+        ~*(Twengabot|htmlparser|libwww|Python|perl|urllib|scan|email|PycURL|Pyth|PyQ|WebCollector|WebCopy|webcraw|nmap|Nmap) 1;
+      }
+    server-snippet: |
+      ## Deny bots
+      if ($limit_bots = 1) {
+        return 444;
+      }
+      ## Disable Tracking
+      if ( $request_method ~ ^(TRACE|TRACK)$ ) {
+        return 405;
+      }
+      ## Disable HTTP 0.9 and 1.0 versions
+      if ($server_protocol ~* "^($|HTTP/1\.0$)") {
+        return 505 "505 HTTP Version Not Supported $server_protocol\r\n";
+      }
+    hsts: "true"
+    hsts-include-subdomains: "true"
+    hsts-max-age: "63072000"
+    disable-ipv6: "true"
+    disable-ipv6-dns: "true"
+  addHeaders:
+    X-XSS-Protection: "1; mode=block"
+  extraArgs:
+    default-ssl-certificate: default/example-tls
+tcp:
+  "22": gitlab-156-eks-production/gitlab:22
+  "5000": gitlab-156-eks-production/gitlab:5000

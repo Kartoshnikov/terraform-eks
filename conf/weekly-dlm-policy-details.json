@@ -1,0 +1,28 @@
+{
+  "PolicyType": "EBS_SNAPSHOT_MANAGEMENT",
+  "ResourceTypes": ["VOLUME"],
+  "TargetTags": [
+    {
+      "Key": "BackupStrategy",
+      "Value": "weekly"
+    }
+  ],
+  "Schedules": [
+    {
+      "Name": "weekly snapshot",
+      "CopyTags": true,
+      "TagsToAdd": [
+        {
+          "Key": "SnapshotCreator",
+          "Value": "EKS Weekly Backup"
+        }
+      ],
+      "CreateRule": {
+        "CronExpression": "cron(0 21 ? * SAT *)"
+      },
+      "RetainRule": {
+        "Count": 1
+      }
+    }
+  ]
+}
